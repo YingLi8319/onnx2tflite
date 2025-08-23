@@ -75,6 +75,29 @@ def keras_builder(onnx_model, native_groupconv:bool=False):
 
 def tflite_builder(keras_model, weight_quant:bool=False, fp16_model=False, int8_model:bool=False, image_root:str=None,
                     int8_mean:list or float = [123.675, 116.28, 103.53], int8_std:list or float = [58.395, 57.12, 57.375]):
+    print("onnx2rflite components builder.py call")
+    # === Debug: 印出函數所有輸入參數 ===
+    print("[tflite_builder] called with arguments:")
+    print(f"  keras_model    : {type(keras_model)}")  # 通常是 tf.keras.Model
+    print(f"  weight_quant   : {weight_quant}")
+    print(f"  fp16_model     : {fp16_model}")
+    print(f"  int8_model     : {int8_model}")
+    print(f"  image_root     : {image_root}")
+    print(f"  int8_mean      : {int8_mean}")
+    print(f"  int8_std       : {int8_std}")
+    from pathlib import Path
+    def _debug_list_calib_dir(calib_dir, max_show=8):
+        p = Path(calib_dir or "")
+        print(f"[calib] dir={p}  exists={p.exists()}  is_dir={p.is_dir()}")
+        exts = {".jpg",".jpeg",".png",".bmp",".webp",".tiff",".tif",".gif"}
+        img_paths = [str(x) for x in p.rglob("*") if x.suffix.lower() in exts] if p.is_dir() else []
+        print(f"[calib] found {len(img_paths)} image files")
+        for s in img_paths[:max_show]:
+            print(f"[calib] sample: {s}")
+        return img_paths
+    img_paths = _debug_list_calib_dir(image_root)
+    if int8 and calibration_img_dir and len(img_paths) == 0:
+        print("[calib][WARN] calibration_img_dir 有設定但找不到任何影像檔，將導致校正統計缺失！")
     converter = tf.lite.TFLiteConverter.from_keras_model(keras_model)
     converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS, tf.lite.OpsSet.SELECT_TF_OPS]
     if weight_quant or int8_model or fp16_model:
