@@ -96,7 +96,7 @@ def tflite_builder(keras_model, weight_quant:bool=False, fp16_model=False, int8_
             print(f"[calib] sample: {s}")
         return img_paths
     img_paths = _debug_list_calib_dir(image_root)
-    if int8_model and img_paths and len(img_paths) == 0:
+    if int8_model and image_root and len(img_paths) == 0:
         print("[calib][WARN] calibration_img_dir 有設定但找不到任何影像檔，將導致校正統計缺失！")
     converter = tf.lite.TFLiteConverter.from_keras_model(keras_model)
     converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS, tf.lite.OpsSet.SELECT_TF_OPS]
