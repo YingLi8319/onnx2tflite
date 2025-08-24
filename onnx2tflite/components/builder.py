@@ -113,8 +113,7 @@ def tflite_builder(keras_model, weight_quant:bool=False, fp16_model=False, int8_
         shape = list(keras_model.inputs[0].shape)
         dataset = RandomLoader(shape) if image_root is None else ImageLoader(image_root, shape, int8_mean, int8_std)
         converter.representative_dataset = lambda: dataset
-        #converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8, tf.lite.OpsSet.SELECT_TF_OPS]
-        converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
+        converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8, tf.lite.OpsSet.SELECT_TF_OPS]
         converter.target_spec.supported_types = []
         converter.inference_input_type = tf.uint8
         converter.inference_output_type = tf.uint8
