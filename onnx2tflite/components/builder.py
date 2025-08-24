@@ -102,7 +102,7 @@ def tflite_builder(keras_model, weight_quant: bool = False, fp16_model: bool = F
         converter.inference_output_type = tf.float32
 
     elif int8_model:
-        list_keras_op_names(keras_model)
+        #list_keras_op_names(keras_model)
         assert len(keras_model.inputs) == 1, f"help want, only support single input model."
         shape = list(keras_model.inputs[0].shape)
         dataset = RandomLoader(shape) if image_root is None else ImageLoader(image_root, shape, int8_mean, int8_std)
@@ -123,7 +123,10 @@ def tflite_builder(keras_model, weight_quant: bool = False, fp16_model: bool = F
             "denylist": {
                 # 這裡放要保持 FP32 的 op 名稱
                 # 通常 Dense 會展開成 MatMul + BiasAdd
-                "op_names": ["dense/BiasAdd", "dense/MatMul"]
+                "op_names": [
+                    "model/dense_1/MatMul",
+                    "model/dense_1/BiasAdd"
+                ]
             }
         }
     
