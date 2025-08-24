@@ -85,7 +85,34 @@ def list_keras_op_names(keras_model):
     print("📌 Available op_names in the model:")
     for node in graph_def.node:
         print(node.name, "→", node.op)
-        
+
+import tensorflow as tf
+from tensorflow.python.framework.convert_to_constants import convert_variables_to_constants_v2
+
+def list_last_dense_nodes(keras_model):
+    """ 找出最後一層 Dense 的 MatMul / BiasAdd 節點名稱 """
+    concrete_func = tf.function(lambda x: keras_model(x))
+    concrete_func = concrete_func.get_concrete_function(
+        tf.TensorSpec(keras_model.inputs[0].shape, keras_model.inputs[0].dtype)
+    )
+    frozen_func = convert_variables_to_constants_v2(concrete_func)
+    graph_def = frozen_func.graph.as_graph_def()
+
+    dense_nodes = []
+    for node in graph_def.node:
+        if "dense" in node.name.lower() and node.op in ["MatMul", "BiasAdd"]:
+            dense_nodes.append(node.name)
+
+    # 只取最後一層的 dense
+    if dense_nodes:
+        last_prefix = sorted(set([n.split("/")[0] for n in dense_nodes]))[-1]  # e.g. "model/dense_1"
+        last_dense_nodes = [n for n in dense_nodes if n.startswith(last_prefix)]
+        print(f"✅ 最後 Dense 節點: {last_dense_nodes}")
+        return last_dense_nodes
+    else:
+        print("⚠️ 沒找到 Dense 節點")
+        return []
+
 def tflite_builder(keras_model, weight_quant: bool = False, fp16_model: bool = False, int8_model: bool = False,
                    image_root: str = None, int8_mean: list or float = [123.675, 116.28, 103.53],
                    int8_std: list or float = [58.395, 57.12, 57.375]):
@@ -119,16 +146,15 @@ def tflite_builder(keras_model, weight_quant: bool = False, fp16_model: bool = F
 
         # 🔑 關鍵：禁用最後一層 (例如 Dense/MatMul/Add) 量化
         # 你需要用 Netron 看 Keras → ONNX → TFLite 的節點名字
-        converter._experimental_quantizer_config = {
-            "denylist": {
-                # 這裡放要保持 FP32 的 op 名稱
-                # 通常 Dense 會展開成 MatMul + BiasAdd
-                "op_names": [
-                    "dense_1/MatMul",
-                    "dense_1/BiasAdd"
-                ]
+        last_dense_nodes = list_last_dense_nodes(keras_model)
+        if last_dense_nodes:
+            converter._experimental_quantizer_config = {
+                "denylist": {
+                    "op_names": last_dense_nodes
+                }
             }
-        }
+            print(f"🚫 已禁用最後一層量化: {last_dense_nodes}")
+
     
     tflite_model = converter.convert()
     return tflite_model
