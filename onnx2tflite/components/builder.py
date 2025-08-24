@@ -3,6 +3,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 import tensorflow as tf
 from tensorflow import keras
+from tensorflow.python.framework.convert_to_constants import convert_variables_to_constants_v2
 from onnx import numpy_helper
 from .dataloader import RandomLoader, ImageLoader
 
@@ -78,7 +79,7 @@ def list_keras_op_names(keras_model):
     concrete_func = concrete_func.get_concrete_function(
         tf.TensorSpec(keras_model.inputs[0].shape, keras_model.inputs[0].dtype)
     )
-    frozen_func = tf.python.framework.convert_to_constants.convert_variables_to_constants_v2(concrete_func)
+    frozen_func = convert_variables_to_constants_v2(concrete_func)
     graph_def = frozen_func.graph.as_graph_def()
 
     print("📌 Available op_names in the model:")
