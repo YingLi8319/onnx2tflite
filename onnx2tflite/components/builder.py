@@ -124,8 +124,8 @@ def tflite_builder(keras_model, weight_quant: bool = False, fp16_model: bool = F
                 # 這裡放要保持 FP32 的 op 名稱
                 # 通常 Dense 會展開成 MatMul + BiasAdd
                 "op_names": [
-                    "model/dense_1/MatMul",
-                    "model/dense_1/BiasAdd"
+                    "dense_1/MatMul",
+                    "dense_1/BiasAdd"
                 ]
             }
         }
