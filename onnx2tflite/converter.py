@@ -42,9 +42,8 @@ def onnx_converter(onnx_model_path:str,  output_path:str=None,
     model_proto = load_onnx_modelproto(onnx_model_path, input_node_names, output_node_names, need_simplify)
 
     keras_model, input_layout, output_layout = keras_builder(model_proto, native_groupconv)
-    print("onnx2tflite converter.py call")
+
     if 'tflite' in target_formats:
-        print(f"image_root:{image_root}")
         tflite_model = tflite_builder(keras_model, weight_quant, fp16_model, int8_model, image_root, int8_mean, int8_std)
 
     onnx_path, model_name = os.path.split(onnx_model_path)
